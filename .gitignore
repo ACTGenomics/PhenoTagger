@@ -1,0 +1,53 @@
+
+.ipynb_checkpoints/
+.env
+.venv
+.envrc
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+#Ignore generated outputs
+output/
+
+# todo list
+todo/
+
+
+#Ignore pycache
+**/__pycache__/
+__pycache__/
+.mypy_cache/
+.idea
+.DS_Store
+.docusaurus
+
+.vscode/launch.json
+.langgraph-data/
+.next/
+*.nfs*
+
+
+#Vim swp files
+*.swp
+
+# tables
+*.xlsx
+*.tsv
+*.xml
+*.txt
+*.csv
+*.json
+*.PubTator
+
+# models
+models/*
+data/distant_train_data/
+
+# keep files
+!reference/total_gene_list.csv
+!requirements.txt
+!example/*

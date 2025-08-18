@@ -1,0 +1,28 @@
+version: "3.9"
+
+services:
+  phenotagger-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: phenotagger-api
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    ports:
+      - "8111:8000"  # FastAPI port
+    volumes:
+      - ./models:/PhenoTagger/models
+      - ./dict:/PhenoTagger/dict
+      - ./input:/data/input
+      - ./output:/data/output
+      - ./.env:/PhenoTagger/src/.env  # Mount .env file
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    restart: unless-stopped

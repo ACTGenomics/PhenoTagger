@@ -1,6 +1,9 @@
+# Core TensorFlow and ML dependencies
 TensorFlow==2.12.0
 transformers==4.30.1
 torch==1.11.0
+
+# NLP and text processing
 nltk==3.8.1
 bioc==2.0.post5
 bllipparser==2021.11.7 
@@ -9,3 +12,22 @@ ply==3.11
 docopt==0.6.2
 JPype1==0.6.3
 networkx==3.1
+tqdm
+
+# FastAPI and web framework
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.0.0
+
+# Environment configuration
+python-dotenv>=1.0.0
+
+# Additional utilities
+numpy>=1.21.0
+regex>=2022.0.0
+
+# Optional: for production deployment
+gunicorn>=21.0.0
+
+# Optional: for API documentation and file uploads
+python-multipart>=0.0.6
