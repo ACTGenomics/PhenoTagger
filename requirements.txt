@@ -9,3 +9,4 @@ ply==3.11
 docopt==0.6.2
 JPype1==0.6.3
 networkx==3.1
+tqdm

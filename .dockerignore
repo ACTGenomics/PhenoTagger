@@ -1,0 +1,6 @@
+*.ipynb
+input/
+output/
+models/
+data/distant_train_data/
+data/mutation_disease.txt

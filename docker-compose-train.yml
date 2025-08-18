@@ -1,0 +1,29 @@
+version: "3.9"
+
+services:
+  phenotagger:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: phenotagger
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    volumes:
+      - ./models:/PhenoTagger/models
+      - ./data:/PhenoTagger/data
+      - ./input:/data/input
+      - ./output:/data/output
+      - ./fine-tuned-models:/PhenoTagger/fine-tuned-models
+      - ./dict:/PhenoTagger/dict
+    command: >
+      python PhenoTagger_training.py
+      -t /PhenoTagger/data/distant_train_data/distant_train.conll
+      -m bioformer
+      -o /PhenoTagger/fine-tuned-models
+      

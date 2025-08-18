@@ -17,7 +17,7 @@ import json
 import re
 import bioc
 import tensorflow as tf
-
+from tqdm import tqdm
 gpu = tf.config.list_physical_devices('GPU')
 print("Num GPUs Available: ", len(gpu))
 if len(gpu) > 0:
@@ -171,86 +171,84 @@ def PubTator_negbio(pipeline, argv, infile, outpath):
     os.remove(outpath+'tmp.neg2.xml')  
 
 
-def phenotagger_tag(infolder,para_set,outfolder):
-    
-    ontfiles={'dic_file':'../dict/noabb_lemma.dic',
-              'word_hpo_file':'../dict/word_id_map.json',
-              'hpo_word_file':'../dict/id_word_map.json'}
-    
-    if para_set['model_type']=='cnn':
-        vocabfiles={'w2vfile':'../models/bio_embedding_intrinsic.d200',   
-                    'charfile':'../dict/char.vocab',
-                    'labelfile':'../dict/lable.vocab',
-                    'posfile':'../dict/pos.vocab'}
-        modelfile='../models/cnn_hpo_v1.1.h5'
-        
-    elif para_set['model_type']=='bioformer':
-        vocabfiles={'labelfile':'../dict/lable.vocab',
-                    'checkpoint_path':'../models/bioformer-cased-v1.0/',
-                    'lowercase':False}
-        modelfile='../models/bioformer_PT_v1.2.h5'
-        
-    elif para_set['model_type']=='pubmedbert':
-        vocabfiles={'labelfile':'../dict/lable.vocab',
-                    'checkpoint_path':'../models/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext/',
-                    'lowercase':True}
-        modelfile='../models/pubmedbert_PT.h5'
-        
+def phenotagger_tag(infolder, para_set, outfolder):
+    ontfiles = {'dic_file': '../dict/noabb_lemma.dic',
+                'word_hpo_file': '../dict/word_id_map.json',
+                'hpo_word_file': '../dict/id_word_map.json'}
+
+    if para_set['model_type'] == 'cnn':
+        vocabfiles = {'w2vfile': '../models/bio_embedding_intrinsic.d200',
+                      'charfile': '../dict/char.vocab',
+                      'labelfile': '../dict/lable.vocab',
+                      'posfile': '../dict/pos.vocab'}
+        modelfile = '../models/cnn_hpo_v1.1.h5'
+
+    elif para_set['model_type'] == 'bioformer':
+        vocabfiles = {'labelfile': '../dict/lable.vocab',
+                      'checkpoint_path': '../models/bioformer-cased-v1.0/',
+                      'lowercase': False}
+        modelfile = '../models/bioformer_PT_v1.2.h5'
+
+    elif para_set['model_type'] == 'pubmedbert':
+        vocabfiles = {'labelfile': '../dict/lable.vocab',
+                      'checkpoint_path': '../models/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext/',
+                      'lowercase': True}
+        modelfile = '../models/pubmedbert_PT.h5'
+
     else:
-        vocabfiles={'labelfile':'../dict/lable.vocab',
-                    'checkpoint_path':'../models/biobert-base-cased-v1.2/',
-                    'lowercase':False}
-        modelfile='../models/biobert-PT.h5'
-    
+        vocabfiles = {'labelfile': '../dict/lable.vocab',
+                      'checkpoint_path': '../models/biobert-base-cased-v1.2/',
+                      'lowercase': False}
+        modelfile = '../models/biobert-PT.h5'
+
     # loading dict and model
-        
-    biotag_dic=dic_ont(ontfiles)    
+    biotag_dic = dic_ont(ontfiles)
 
-    if para_set['model_type']=='cnn':
-        nn_model=bioTag_CNN(vocabfiles)
+    if para_set['model_type'] == 'cnn':
+        nn_model = bioTag_CNN(vocabfiles)
         nn_model.load_model(modelfile)
     else:
-        nn_model=bioTag_BERT(vocabfiles)
+        nn_model = bioTag_BERT(vocabfiles)
         nn_model.load_model(modelfile)
 
-    if para_set['negation'] == True:
+    if para_set['negation'] is True:
         pipeline, argv = negbio_load()
 
-    #tagging text
+    # tagging text
     print("begin tagging........")
-    start_time=time.time()
-    
-    i=0
-    N=0
-    for filename in os.listdir(infolder):
-        N+=1
-    for filename in os.listdir(infolder):
-        print("Processing:{0}%".format(round(i * 100 / N)), end="\r")
-        i+=1
-                
-        with open(infolder+filename, 'r',encoding='utf-8') as fin:
-            format=""
+    start_time = time.time()
+
+    file_list = os.listdir(infolder)
+
+    for filename in tqdm(file_list, desc="Processing files", unit="file"):
+        with open(os.path.join(infolder, filename), 'r', encoding='utf-8') as fin:
+            format = ""
             for line in fin:
                 pattern_bioc = re.compile('.*<collection>.*')
                 pattern_pubtator = re.compile('^([^\|]+)\|[^\|]+\|(.*)')
                 if pattern_pubtator.search(line):
-                    format="PubTator"
+                    format = "PubTator"
                     break
                 elif pattern_bioc.search(line):
-                    format="BioC"
+                    format = "BioC"
                     break
-            if(format == "PubTator"):
-                PubTator_Converter(infolder+filename,outfolder+filename,biotag_dic,nn_model, para_set)
-                if para_set['negation'] == True:
-                    PubTator_negbio(pipeline, argv, outfolder+filename, outfolder)
-            elif(format == "BioC"):
-                BioC_Converter(infolder+filename,outfolder+filename,biotag_dic,nn_model,para_set)   
-                if para_set['negation'] == True:
-                    negbio_main(pipeline, argv, outfolder+filename, outfolder)
 
+            if format == "PubTator":
+                PubTator_Converter(os.path.join(infolder, filename),
+                                   os.path.join(outfolder, filename),
+                                   biotag_dic, nn_model, para_set)
+                if para_set['negation'] is True:
+                    PubTator_negbio(pipeline, argv,
+                                    os.path.join(outfolder, filename), outfolder)
+            elif format == "BioC":
+                BioC_Converter(os.path.join(infolder, filename),
+                               os.path.join(outfolder, filename),
+                               biotag_dic, nn_model, para_set)
+                if para_set['negation'] is True:
+                    negbio_main(pipeline, argv,
+                                os.path.join(outfolder, filename), outfolder)
 
-    
-    print('tag done:',time.time()-start_time)
+    print(f"tag done: {time.time() - start_time:.2f} s")
 
 
 
@@ -268,9 +266,9 @@ if __name__=="__main__":
 
     para_set={
               'model_type':'bioformer', # cnn, bioformer, pubmedbert or biobert
-              'onlyLongest':True, # False: return overlap concepts, True only longgest
+              'onlyLongest':False, # False: return overlap concepts, True only longgest
               'abbrRecog':True,# False: don't identify abbr, True: identify abbr
-              'negation': True, #True:negation detection
+              'negation': False, #True:negation detection
               'ML_Threshold':0.95,# the Threshold of deep learning model
               }
     
